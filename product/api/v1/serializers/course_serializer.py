@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Avg, Count
 from rest_framework import serializers
 
-from courses.models import Course, Group, Lesson
-from users.models import Subscription
+from courses.models import Course, Group, Lesson, Subscription
 
 User = get_user_model()
 
@@ -24,6 +22,8 @@ class LessonSerializer(serializers.ModelSerializer):
 
 class CreateLessonSerializer(serializers.ModelSerializer):
     """Создание уроков."""
+
+    course = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Lesson
@@ -46,15 +46,6 @@ class StudentSerializer(serializers.ModelSerializer):
         )
 
 
-class GroupSerializer(serializers.ModelSerializer):
-    """Список групп."""
-
-    # TODO Доп. задание
-
-    class Meta:
-        model = Group
-
-
 class CreateGroupSerializer(serializers.ModelSerializer):
     """Создание групп."""
 
@@ -64,6 +55,7 @@ class CreateGroupSerializer(serializers.ModelSerializer):
             'title',
             'course',
         )
+        read_only_fields = ('course',)
 
 
 class MiniLessonSerializer(serializers.ModelSerializer):
@@ -87,19 +79,24 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_lessons_count(self, obj):
         """Количество уроков в курсе."""
-        # TODO Доп. задание
+        return obj.lessons_count
 
     def get_students_count(self, obj):
         """Общее количество студентов на курсе."""
-        # TODO Доп. задание
+        return obj.student_count
 
     def get_groups_filled_percent(self, obj):
         """Процент заполнения групп, если в группе максимум 30 чел.."""
-        # TODO Доп. задание
+        return obj.procent_group
 
     def get_demand_course_percent(self, obj):
         """Процент приобретения курса."""
-        # TODO Доп. задание
+        user_count = User.objects.count()
+
+        if user_count == 0:
+            return 0.0
+
+        return obj.student_count / user_count
 
     class Meta:
         model = Course
@@ -122,3 +119,14 @@ class CreateCourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
+        fields = '__all__'
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """Список групп."""
+
+    course = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Group
+        fields = ['title', 'count_student', 'course']

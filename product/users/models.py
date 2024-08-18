@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.exceptions import ValidationError
+
 
 class CustomUser(AbstractUser):
     """Кастомная модель пользователя - студента."""
@@ -23,27 +25,36 @@ class CustomUser(AbstractUser):
         ordering = ('-id',)
 
     def __str__(self):
-        return self.get_full_name()
+        return self.username
 
 
 class Balance(models.Model):
     """Модель баланса пользователя."""
 
-    # TODO
+    user = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
+    )
+    balance = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=1000,
+        verbose_name='Баланс'
+    )
+
+    def save(self, *args, **kwargs):
+        if self.balance < 0:
+            raise ValidationError(message='Баланс не может быть отрицательным.')
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Баланс'
         verbose_name_plural = 'Балансы'
         ordering = ('-id',)
 
+    def __str__(self):
+        return f'Пользователь: {self.user.username} | Баланс: {self.balance}'
 
-class Subscription(models.Model):
-    """Модель подписки пользователя на курс."""
 
-    # TODO
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        ordering = ('-id',)
 
