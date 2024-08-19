@@ -34,10 +34,8 @@ class LessonViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         course = get_object_or_404(Course.objects.prefetch_related('lessons', 'subscriptions'),
                                    id=self.kwargs.get('course_id'))
-        if course.subscriptions.filter(user=self.request.user) or self.request.user.is_staff:
-            return course.lessons.all()
 
-        return []
+        return course.lessons.all()
 
 
 class GroupViewSet(viewsets.ModelViewSet):
