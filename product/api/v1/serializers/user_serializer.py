@@ -58,8 +58,8 @@ class BalanceAdminSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор подписки."""
 
-    user = CustomUserSerializer()
-    course = CourseSerializer()
+    user = serializers.StringRelatedField()
+    course = serializers.StringRelatedField()
 
     class Meta:
         model = Subscription
