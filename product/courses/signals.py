@@ -33,3 +33,18 @@ def post_save_subscription(sender, instance: Subscription, created, **kwargs):
             StudentGroup.objects.create(group=group.first(), user=instance.user)
             group.count_student = F('count_student') + 1
             group.save()
+
+    if not instance.is_valid:
+        student_group = StudentGroup.objects.filter(
+            user=instance.user,
+            group__course=instance.course
+        ).select_related('group').first()
+
+        if student_group:
+            group = student_group.group
+
+            if group.count_student > 0:
+                group.count_student -= 1
+                group.save()
+
+            student_group.delete()
