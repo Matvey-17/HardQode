@@ -121,6 +121,9 @@ class Group(models.Model):
         verbose_name = 'Группа'
         verbose_name_plural = 'Группы'
         ordering = ('-id',)
+        constraints = [
+            models.UniqueConstraint(fields=['title', 'course'], name='unique_group'),
+        ]
 
     def __str__(self):
         return f'Группа: {self.title} | Курс: {self.course.title}'
