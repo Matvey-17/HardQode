@@ -77,6 +77,10 @@ class CourseSerializer(serializers.ModelSerializer):
     groups_filled_percent = serializers.SerializerMethodField(read_only=True)
     demand_course_percent = serializers.SerializerMethodField(read_only=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._user_count = User.objects.count()
+
     def get_lessons_count(self, obj):
         """Количество уроков в курсе."""
         return obj.lessons_count
@@ -91,12 +95,11 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_demand_course_percent(self, obj):
         """Процент приобретения курса."""
-        user_count = User.objects.count()
 
-        if user_count == 0:
+        if self._user_count == 0:
             return 0.0
 
-        return obj.student_count / user_count
+        return obj.student_count / self._user_count
 
     class Meta:
         model = Course
