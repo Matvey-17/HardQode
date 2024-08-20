@@ -79,26 +79,23 @@ class CourseViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             balance = get_object_or_404(Balance, user=request.user)
-
             course = get_object_or_404(Course, id=pk)
 
-            if course.price <= balance.balance:
-                subscription = Subscription.objects.filter(user=request.user,
-                                                           course=course).first()
+            if course.price > balance.balance:
+                return Response(
+                    {'detail': 'Недостаточно средств (бонусов)'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-                if not subscription:
-                    subscription = Subscription.objects.create(user=request.user, course=course, is_valid=True)
+            if Subscription.objects.filter(user=request.user, course=course).exists():
+                return Response(
+                    {'detail': 'Уже есть подписка на этот курс'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-                    balance.balance -= course.price
-                    balance.save()
+            subscription = Subscription.objects.create(user=request.user, course=course, is_valid=True)
+            balance.balance -= course.price
+            balance.save()
 
-                    data = SubscriptionSerializer(subscription)
-
-                    return Response(
-                        data=data.data,
-                        status=status.HTTP_201_CREATED
-                    )
-
-                return Response({'detail': 'Уже есть подписка на этот курс'}, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({'detail': 'Недостаточно средств (бонусов)'}, status=status.HTTP_400_BAD_REQUEST)
+            data = SubscriptionSerializer(subscription)
+            return Response(data=data.data, status=status.HTTP_201_CREATED)
